@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { alertsApi } from '../services/api';
 import { AlertCard } from '../components/AlertCard';

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { newsApi } from '../services/api';
 import { NewsCategory } from '../types';
 import { formatRelativeTime } from '../lib/utils';
-import { Search, TrendingUp, Globe, Calendar, ArrowRight, Mail } from 'lucide-react';
+import { Search, TrendingUp, Globe, ArrowRight, Mail } from 'lucide-react';
 
 export function PublicPortal() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');

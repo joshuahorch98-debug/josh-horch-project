@@ -1,4 +1,3 @@
-import React from 'react';
 import { NewsItem } from '../types';
 import { Card, CardContent, CardHeader } from './ui/Card';
 import { Badge } from './ui/Badge';

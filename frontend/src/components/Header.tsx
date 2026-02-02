@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Search, Wifi, Clock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useQuery } from '@tanstack/react-query';

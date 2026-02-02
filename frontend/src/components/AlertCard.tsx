@@ -1,9 +1,8 @@
-import React from 'react';
 import { Alert } from '../types';
 import { Card, CardContent } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { formatRelativeTime, getSeverityColor, getCategoryColor } from '../lib/utils';
-import { Bell, BellOff, Clock, CheckCircle2 } from 'lucide-react';
+import { Bell, Clock, CheckCircle2 } from 'lucide-react';
 
 interface AlertCardProps {
   alert: Alert;

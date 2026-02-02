@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { newsApi } from '../services/api';
 import { NewsCard } from '../components/NewsCard';

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { newsApi, alertsApi } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -31,7 +31,7 @@ export function Dashboard() {
 
     socketService.on('breaking-news', (data) => {
       toast.custom(
-        (t) => (
+        () => (
           <div className="bg-red-500/10 border border-red-500/30 text-foreground p-4 rounded-lg shadow-lg max-w-md cyber-glow">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
