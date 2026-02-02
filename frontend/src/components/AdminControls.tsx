@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { RefreshCw, FileText, Loader2, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, FileText, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -30,7 +30,7 @@ export function AdminControls() {
   const triggerReport = async () => {
     setIsGeneratingReport(true);
     try {
-      const response = await axios.post(`${API_URL}/api/trigger-report`);
+      await axios.post(`${API_URL}/api/trigger-report`);
       toast.success('Daily report generated successfully!', {
         duration: 5000,
         icon: '📊',
