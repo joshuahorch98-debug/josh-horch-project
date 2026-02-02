@@ -42,6 +42,38 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.post('/api/trigger-monitoring', async (req, res) => {
+  try {
+    logger.info('Manual monitoring cycle triggered');
+    monitoringService.runMonitoringCycle();
+    res.json({
+      success: true,
+      message: 'Monitoring cycle started',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start monitoring cycle',
+    });
+  }
+});
+
+app.post('/api/trigger-report', async (req, res) => {
+  try {
+    logger.info('Manual report generation triggered');
+    const report = await reportService.generateDailyReport();
+    res.json({
+      success: true,
+      data: report,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate report',
+    });
+  }
+});
+
 monitoringService.on('breaking-news', (data) => {
   logger.info('Breaking news alert:', data.alert.title);
   io.emit('breaking-news', data);

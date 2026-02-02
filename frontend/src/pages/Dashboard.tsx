@@ -4,6 +4,7 @@ import { newsApi, alertsApi } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { NewsCard } from '../components/NewsCard';
 import { AlertCard } from '../components/AlertCard';
+import { AdminControls } from '../components/AdminControls';
 import { Badge } from '../components/ui/Badge';
 import { AlertTriangle, Globe, Activity, Zap, Radio, Eye, Database } from 'lucide-react';
 import socketService from '../services/socket';
@@ -79,6 +80,9 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Admin Controls */}
+      <AdminControls />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

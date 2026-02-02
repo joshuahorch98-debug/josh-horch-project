@@ -73,6 +73,64 @@ export class MonitoringService extends EventEmitter {
         item.content
       );
 
+      // SEVERITY CLASSIFICATION RULES
+      // These rules determine the importance and urgency of news items
+      const titleLower = item.title.toLowerCase();
+      const contentLower = (item.content || '').toLowerCase();
+      const combined = titleLower + ' ' + contentLower;
+      
+      // CRITICAL SEVERITY - Immediate threat to operations, safety, or major political change
+      const criticalKeywords = [
+        'coup', 'military action', 'war', 'armed conflict', 'assassination',
+        'regime change', 'martial law', 'state of emergency', 'invasion',
+        'terrorist attack', 'major violence', 'civil war'
+      ];
+      
+      // HIGH SEVERITY - Significant impact on business/security operations
+      const highKeywords = [
+        'crisis', 'urgent', 'breaking news', 'major protest', 'riot',
+        'government collapse', 'diplomatic crisis', 'oil embargo',
+        'border closure', 'airport closure', 'mass arrests',
+        'humanitarian crisis', 'food shortage', 'power outage'
+      ];
+      
+      // MEDIUM SEVERITY - Important developments requiring monitoring
+      const mediumKeywords = [
+        'election', 'protest', 'sanctions', 'policy change', 'economic reform',
+        'trade restrictions', 'diplomatic tension', 'opposition leader',
+        'international pressure', 'human rights', 'corruption investigation',
+        'oil production', 'inflation', 'currency devaluation'
+      ];
+      
+      // BREAKING NEWS INDICATORS - Time-sensitive information
+      const breakingKeywords = [
+        'breaking', 'just in', 'developing', 'urgent', 'alert',
+        'announced', 'confirmed', 'reports of', 'happening now'
+      ];
+      
+      // Determine severity level
+      let severity = analysis.severity || AlertSeverity.LOW;
+      
+      if (criticalKeywords.some(keyword => combined.includes(keyword))) {
+        severity = AlertSeverity.CRITICAL;
+      } else if (highKeywords.some(keyword => combined.includes(keyword))) {
+        severity = AlertSeverity.HIGH;
+      } else if (mediumKeywords.some(keyword => combined.includes(keyword))) {
+        severity = AlertSeverity.MEDIUM;
+      }
+      
+      // Check if breaking news
+      const isBreaking = analysis.isBreaking || 
+        breakingKeywords.some(keyword => titleLower.includes(keyword)) ||
+        (severity === AlertSeverity.CRITICAL || severity === AlertSeverity.HIGH);
+      
+      // Additional context-based severity adjustment
+      // Maduro-related news is typically high priority
+      if ((titleLower.includes('maduro') || titleLower.includes('president')) && 
+          (titleLower.includes('announce') || titleLower.includes('order') || titleLower.includes('decree'))) {
+        severity = severity === AlertSeverity.LOW ? AlertSeverity.MEDIUM : severity;
+      }
+
       let translatedContent = item.content;
       if (this.isSpanish(item.content)) {
         translatedContent = await aiService.translateToEnglish(item.content);
@@ -81,7 +139,7 @@ export class MonitoringService extends EventEmitter {
       const newsItem = new NewsItem({
         title: item.title,
         content: translatedContent,
-        summary: analysis.summary,
+        summary: analysis.summary || item.content?.substring(0, 200) + '...',
         category: analysis.category,
         platform: item.platform,
         sourceUrl: item.sourceUrl,
@@ -91,17 +149,17 @@ export class MonitoringService extends EventEmitter {
         sentiment: analysis.sentiment,
         keywords: analysis.keywords,
         entities: analysis.entities,
-        isBreaking: analysis.isBreaking,
-        severity: analysis.severity,
+        isBreaking: isBreaking,
+        severity: severity,
       });
 
       await newsItem.save();
 
-      if (analysis.isBreaking || analysis.severity === AlertSeverity.HIGH || analysis.severity === AlertSeverity.CRITICAL) {
+      if (isBreaking || severity === AlertSeverity.HIGH || severity === AlertSeverity.CRITICAL || severity === AlertSeverity.MEDIUM) {
         await this.createAlert(newsItem);
       }
 
-      console.log(`Processed: ${item.title.substring(0, 50)}...`);
+      console.log(`Processed: ${item.title.substring(0, 50)}... [${severity}]${isBreaking ? ' [BREAKING]' : ''}`);
     } catch (error) {
       console.error('Item processing error:', error);
     }

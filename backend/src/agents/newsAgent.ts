@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import NewsAPI from 'newsapi';
 import { config } from '../config';
 import { SourcePlatform } from '../types';
@@ -8,6 +9,20 @@ const newsapi = new NewsAPI(config.apis.newsApi);
 
 export class NewsAgent {
   private platform = SourcePlatform.NEWS;
+
+  private stripHtmlTags(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   async fetchNews(): Promise<any[]> {
     const results: any[] = [];
@@ -76,13 +91,26 @@ export class NewsAgent {
           },
         });
 
-        results.push({
-          title: `Google News: ${query}`,
-          content: response.data,
-          sourceUrl: `https://news.google.com/search?q=${encodeURIComponent(query)}`,
-          sourceName: 'Google News',
-          publishedAt: new Date(),
-          platform: this.platform,
+        const $ = cheerio.load(response.data, { xmlMode: true });
+        const items = $('item');
+        
+        items.each((_, element) => {
+          const $item = $(element);
+          const title = this.stripHtmlTags($item.find('title').text());
+          const link = $item.find('link').text();
+          const description = this.stripHtmlTags($item.find('description').text());
+          const pubDate = $item.find('pubDate').text();
+          
+          if (title && link && description && description.length > 20) {
+            results.push({
+              title: title,
+              content: description,
+              sourceUrl: link,
+              sourceName: 'Google News',
+              publishedAt: pubDate ? new Date(pubDate) : new Date(),
+              platform: this.platform,
+            });
+          }
         });
       } catch (error) {
         console.error(`Google News error for query "${query}":`, error);
@@ -94,26 +122,39 @@ export class NewsAgent {
 
   private async fetchFromRSS(): Promise<any[]> {
     const feeds = [
-      'https://www.aljazeera.com/xml/rss/all.xml',
-      'https://www.bbc.com/news/world/latin_america/rss.xml',
-      'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+      { url: 'https://www.aljazeera.com/xml/rss/all.xml', name: 'Al Jazeera' },
+      { url: 'https://www.bbc.com/news/world/latin_america/rss.xml', name: 'BBC' },
+      { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', name: 'New York Times' },
     ];
 
     const results: any[] = [];
 
-    for (const feedUrl of feeds) {
+    for (const feed of feeds) {
       try {
-        const response = await axios.get(feedUrl);
-        results.push({
-          title: `RSS Feed: ${feedUrl}`,
-          content: response.data,
-          sourceUrl: feedUrl,
-          sourceName: 'RSS Feed',
-          publishedAt: new Date(),
-          platform: this.platform,
+        const response = await axios.get(feed.url);
+        const $ = cheerio.load(response.data, { xmlMode: true });
+        const items = $('item');
+        
+        items.each((_, element) => {
+          const $item = $(element);
+          const title = this.stripHtmlTags($item.find('title').text());
+          const link = $item.find('link').text();
+          const description = this.stripHtmlTags($item.find('description').text());
+          const pubDate = $item.find('pubDate').text();
+          
+          if (title && link && title.toLowerCase().includes('venezuela') && description && description.length > 20) {
+            results.push({
+              title: title,
+              content: description,
+              sourceUrl: link,
+              sourceName: feed.name,
+              publishedAt: pubDate ? new Date(pubDate) : new Date(),
+              platform: this.platform,
+            });
+          }
         });
       } catch (error) {
-        console.error(`RSS feed error for ${feedUrl}:`, error);
+        console.error(`RSS feed error for ${feed.url}:`, error);
       }
     }
 
